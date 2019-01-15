@@ -14,4 +14,20 @@ socket.on('newEmail', (email) => {
 
 socket.on('newMessage', (message) => {
     console.log('Message', message);
+
+    const li = $('<li class="list-group-item"></li>');
+
+    li.text(`${message.from}: ${message.text}`);
+    $('.list-group').append(li);
+});
+
+$('#message').on('submit', function (e) {
+    e.preventDefault();
+
+    socket.emit('createMessage', {
+        from: 'User',
+        text: $('[name=message_input]').val()
+    }, () => {
+
+    })
 });
