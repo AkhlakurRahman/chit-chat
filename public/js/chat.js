@@ -1,11 +1,45 @@
 const socket = io();
 
 socket.on('connect', function () {
-	console.log('Connected to server');
+	const params = $.deparam(window.location.search);
+
+	socket.emit('join', params, function (error) {
+		if (error) {
+			alert('Fill bitch');
+			window.location.href = '/';
+		} else {
+			console.log('No error');
+		}
+	})
 });
 
 socket.on('disconnect', function () {
 	console.log('Disconnected from server');
+});
+
+const scrollToBottom = () => {
+	const messages = $('#messages');
+	const newMessage = messages.children('li:last-child');
+
+	const clientHeight = messages.prop('clientHeight');
+	const scrollTop = messages.prop('scrollTop');
+	const scrollHeight = messages.prop('scrollHeight');
+	const newMessageHeight = newMessage.innerHeight();
+	const lastMessageHeight = newMessage.prev().innerHeight();
+
+	if (clientHeight + scrollTop + newMessageHeight + lastMessageHeight >= scrollHeight) {
+		messages.scrollTop(scrollHeight);
+	}
+};
+
+socket.on('updateUserList', (users) => {
+	const ol = $('<ol></ol>');
+
+	users.forEach((user) => {
+		ol.append($('<li></li>').text(user));
+	});
+
+	$('#users').html(ol);
 });
 
 socket.on('newMessage', function (message) {
@@ -19,6 +53,7 @@ socket.on('newMessage', function (message) {
 	});
 
 	$('#messages').append(html);
+	scrollToBottom();
 });
 
 socket.on('newLocationMessage', function (message) {
@@ -31,6 +66,7 @@ socket.on('newLocationMessage', function (message) {
 	});
 
 	$('#messages').append(html);
+	scrollToBottom();
 });
 
 $('#message-form').on('submit', function (e) {
@@ -39,7 +75,6 @@ $('#message-form').on('submit', function (e) {
 	const messageTextbox = $('[name=message]');
 
 	socket.emit('createMessage', {
-		from: 'User',
 		text: messageTextbox.val()
 	}, function () {
 		messageTextbox.val('')
